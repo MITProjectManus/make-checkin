@@ -1,1 +1,0 @@
-# Raspberry Pi OS systemctl launch script for the GUI application
