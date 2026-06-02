@@ -1,0 +1,19 @@
+[Unit]
+Description=Makerspace Checkin Python Application
+After=graphical.target
+Wants=graphical.target
+
+
+[Service]
+User=pi
+Environment=DISPLAY=:0
+Environment=XAUTHORITY=/home/pi/.Xauthority
+WorkingDirectory=/home/pi/
+# Update this if you use another name for the launch script
+ExecStart=/home/pi/make-checkin-pi.sh
+# Below could also be "on-failure" to only restart if it exits with a code
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=graphical.target
