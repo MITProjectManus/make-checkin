@@ -26,7 +26,7 @@ Add troubleshooting information here.
 
 1. Sometimes stuck on "One moment..." screen; possibly if invalid data is read with card tap, or if network connection is lost on the Pi temporarily
 2. Ignoring follow-up question will block forever on that screen until someone picks one; should time out and complete checkin
-3. Most errors are silent or logged in the background; should have a way of showing error to user
+3. Better error checking, run state health monitoring, and recovery; most errors and blocking states are silent or logged in the background; should have a way of showing error to user, possibly watchdog timer for restart if an unrecoverable blocking state can occur
 4. Network status and connection to APIs and internet are not shown; should indicate if no network, and retry periodically; should indicate if API endpoints are unreachable and retry periodically
 5. A failure response from the MIT Card API should be indicated to the user, including token read from card and API error code
 6. Performance is slow, better on the Pi 4 than the Pi 3, but probably could be improved with more compact API calls, fewer open ended searches, maybe local caching of info
