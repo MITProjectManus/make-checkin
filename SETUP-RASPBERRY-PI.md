@@ -165,6 +165,16 @@ WantedBy=graphical.target
 * Exit the checkin application with ALT-F4 and it should re-launch after 30 second  
 * **NOTE:** To disable the application, for example to work on the machine, run sudo systemctl stop checkin. While working on the machine later, remember that changes are temporary if you are running with the overlay filesystem and write-protected boot partition enabled, which we will do in the next step.
 
+## Update X session autostart
+
+Update the X session autostart file to also run the two xset commands and to disable automatic launching of xscreensaver if that is enabled.
+
+* autostart file has moved to `/etc/xdg/lxsession/rpd-x/autostart`
+* Comment the `@xscreensaver...` line if present
+* Add:
+  * `@xset s 0`
+  * `@xset \-dpms`
+
 ## Configure the Overlay Filesystem
 
 * Run raspi-config via sudo raspi-config in the Terminal  
@@ -179,19 +189,9 @@ WantedBy=graphical.target
 
 # Appendices
 
-## Appendix A
+## Appendix AR1: Archive/Legacy
 
-Considerations for a next version of the software and Raspberry Pi configuration, especially with an eye towards simplified installation, updates, and maintenance.
-
-* Switch to normal landscape orientation for kiosks and checkin stations, avoiding display rotation issues; portrait is a nice stylistic option but does not have any functional benefits and requires several extra configuration steps  
-* Update code an fullscreen to work with Wayland, avoiding the need to switch to X11; there is no intrinsic reason a Tkinter app shouldn't run in fullscreen on Wayland, especially on newer Pis  
-* Investigate whether there is a touch input library for Tkinter  
-* Consider switching to guizero (a simplified GUI library over Tkinter) for ease of maintenance by non-programmers; it has a simpler event loop and configuration model  
-* Simplify requirements.txt \- most of the listed requirements are installed by default; the only post-installation package install needed is the Python airtable library; update to install current version given the likelihood of infrequent updates and the very simple code base
-
-## Appendix AR1
-
-**2025-06-01 Chris PDF "Installing a Signin Kiosk"**  
+**2025-06-01 From Chris PDF "Installing a Signin Kiosk"**  
 These instructions are out of date 
 
 * Install Raspberry Pi OS  
