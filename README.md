@@ -1,4 +1,4 @@
-# Makerspaces Checkin
+# Make: Checkin
 
 A major new version of a card tap checkin kiosk program in Python able to run on Raspberry Pis (and other hardware) that processes MIT ID card taps (and digital ID taps) to check users into and out of makerspaces. This replaces [Airtable-Card-Checkin](https://github.com/MITProjectManus/Airtable-Card-Checkin), the original prototype version of card tap checkin for MIT makerspaces.
 
