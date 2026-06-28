@@ -109,6 +109,7 @@
 * Optional: if using with an **Ethernet connection** to the network, the following steps are needed to enable networking on the internal Ethernet interface:
   * Why? The USB HID OmniKey 5427CK Standard Reader in use at MIT presents as both a USB HID device to the Raspberry Pi (for simulated keyboard input from a card tap) and as a USB Ethernet adapter to allow connecting to the web server interface on the reader for configuration. In our setup the Pi will default to the card reader as `eth0` and disable the built-in Ethernet interface. The following commands will correctly set the built in Ethernet interface as the main one, leaving the card reader interface also active on a locally routed IP address.
   * Run the following at a terminal command prompt:
+
   ```
 # Pin the existing profile to the real onboard NIC
 sudo nmcli connection modify netplan-eth0 connection.interface-name eth0
@@ -120,13 +121,16 @@ sudo nmcli connection add type ethernet con-name usb0-omnikey ifname usb0 ipv4.m
 sudo nmcli connection up netplan-eth0
 sudo nmcli connection up usb0-omnikey
   ``` 
+
   * To verify that the changes took:
+
   ```
 nmcli device status
 ip a show eth0
 ip a show usb0
   ```
-* You should see `eth0` connected with `netplan-eth0` and an IP from your LAN's DHCP server, and `usb0` connected with its own profile, with an IP that looks like `192.168.63.x` for the reader.
+
+  * You should see `eth0` connected with `netplan-eth0` and an IP from your LAN's DHCP server, and `usb0` connected with its own profile, with an IP that looks like `192.168.63.x` for the reader.
 
 ## Install the checkin Python application
 
