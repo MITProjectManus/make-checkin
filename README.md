@@ -1,41 +1,103 @@
 # Make: Checkin
 
-A major new version of a card tap checkin kiosk program in Python able to run on Raspberry Pis (and other hardware) that processes MIT ID card taps (and digital ID taps) to check users into and out of makerspaces. This replaces [Airtable-Card-Checkin](https://github.com/MITProjectManus/Airtable-Card-Checkin), the original prototype version of card tap checkin for MIT makerspaces.
+A card tap check-in kiosk for MIT makerspaces. Runs on a Raspberry Pi with a touchscreen and a USB HID card reader. Users tap their MIT ID card, the system resolves it to their Kerberos ID via the MIT Card API, and records a check-in or check-out session in Airtable.
 
-## Installation
+This replaces [Airtable-Card-Checkin](https://github.com/MITProjectManus/Airtable-Card-Checkin), the original prototype version of card tap check-in for MIT makerspaces.
 
-Combine installation, configuration, and setup into one section that makes sense.
+## How it works
+
+1. The kiosk shows a welcome screen and waits for a card tap.
+2. A card tap is read by the USB HID card reader, which sends card data to the app via simulated keyboard input (ending with Enter).
+3. The app calls the MIT Card API to convert the raw card ID to a Kerberos username.
+4. If the user has no open session in Airtable, they are shown a brief survey question (e.g., "What brings you here today?") and checked in.
+5. If the user already has an open session, they are checked out immediately.
+6. All sessions are recorded in Airtable with the linked maker record, makerspace, survey response, and check-out timestamp.
+
+## Hardware and Software Setup
+
+For the complete hardware bill of materials, assembly, OS installation, and software configuration for the standard Raspberry Pi 4 kiosk, see:
+
+**[SETUP-RASPBERRY-PI.md](SETUP-RASPBERRY-PI.md)**
 
 ## Configuration
 
-### Location `config.py` (not tracked)
+Each kiosk requires a `config.py` file that is **not tracked** in this repository. Create it by copying `config-example.py`:
 
-For each location kiosk, the file `config.py` contains API keys and location-specific configuration items. This file needs to be locally managed and deployed for each kiosk. This file is **NOT** tracked and is excluded via `.gitignore`. For an example without keys see `config-example.py`.
+```bash
+cp config-example.py config.py
+```
 
-### Hardware and Software Setup
+Then fill in the values for your specific kiosk deployment.
 
-For our current standard checkin kiosk hardware, a Raspberry Pi 4 with touchscreen and HID card reader, see the setup instructions for both hardware and software in the file:
+### `secrets` — API credentials
 
-SETUP-RASPBERRY-PI.md
+| Key | Description |
+|-----|-------------|
+| `airtable_pat` | Airtable Personal Access Token for the Making at MIT base |
+| `people_client_id` | MIT People API Client ID |
+| `people_client_secret` | MIT People API Client Secret |
+| `card_client_id` | MIT Card API Client ID (OAuth2 client credentials) |
+| `card_client_secret` | MIT Card API Client Secret |
 
-## Troubleshooting
+### `site` — Location settings
 
-Add troubleshooting information here.
+| Key | Description |
+|-----|-------------|
+| `title` | Makerspace display name shown on the check-in screen |
+| `name` | Makerspace name exactly as it appears in Airtable |
+| `description` | Short description shown on the check-in screen |
+| `color-1` | Primary theme color (hex, e.g. `#57b99d`) |
+| `color-2` | Secondary/dark theme color (hex) |
 
-## Running List of Issues and Needed Enhancements
+The `name` field must match the makerspace record name in Airtable exactly — it is used to look up the Airtable record ID at startup.
 
-1. Sometimes stuck on "One moment..." screen; possibly if invalid data is read with card tap, or if network connection is lost on the Pi temporarily
-2. Ignoring follow-up question will block forever on that screen until someone picks one; should time out and complete checkin
-3. Better error checking, run state health monitoring, and recovery; most errors and blocking states are silent or logged in the background; should have a way of showing error to user, possibly watchdog timer for restart if an unrecoverable blocking state can occur
-4. Network status and connection to APIs and internet are not shown; should indicate if no network, and retry periodically; should indicate if API endpoints are unreachable and retry periodically
-5. A failure response from the MIT Card API should be indicated to the user, including token read from card and API error code
-6. Performance is slow, better on the Pi 4 than the Pi 3, but probably could be improved with more compact API calls, fewer open ended searches, maybe local caching of info
-7. Only MIT IDs can be read at the moment; should be able to register a tap ID (such as MiFare ID) in Airtable and check that if MIT ID read is invalid
-8. Are we clearing the input buffer before the next card read?
-9. Better idle and button graphics
-10. Consider switching to normal landscape orientation for kiosks and checkin stations, avoiding display rotation issues; portrait is a nice stylistic option but does not have any functional benefits and requires several extra configuration steps; will require updating the code to deal with screen dimensions and layout more flexibly
-11. Update code for fullscreen to work with Wayland, avoiding the need to switch to X11; there is no intrinsic reason a Tkinter app shouldn't run in fullscreen on Wayland, especially on newer Pis  
-12. Investigate whether there is a touch input library for Tkinter
-13. Consider switching to guizero (a simplified GUI library over Tkinter) for ease of maintenance by non-programmers; it has a simpler event loop and configuration model
-14. DONE: Simplify requirements.txt \- most of the listed requirements are installed by default; the only post-installation package install needed is the Python airtable library; update to install current version given the likelihood of infrequent updates and the very simple code base
+### `question` — Check-in survey
 
+| Key | Description |
+|-----|-------------|
+| `question` | Survey question shown at check-in |
+| `answers` | List of answer button labels shown to the user |
+
+The survey appears after a card tap for a new check-in and times out after 10 seconds, recording `'na'` if no answer is selected.
+
+### `logs`
+
+| Key | Description |
+|-----|-------------|
+| `logfile` | Absolute path to log file; leave empty string to disable file logging |
+
+## Running
+
+Install the one required dependency:
+
+```bash
+pip install --break-system-packages -r requirements.txt
+```
+
+Run the app:
+
+```bash
+# Cypress Wedge card reader (outputs keystrokes like a keyboard)
+python make-checkin.py
+
+# HID Omnikey card reader (raw binary card data — standard deployed configuration)
+python make-checkin.py -H
+```
+
+On a deployed kiosk the app is launched automatically via a systemd service and restarts automatically if it exits. See [SETUP-RASPBERRY-PI.md](SETUP-RASPBERRY-PI.md) for full details.
+
+## Known Issues and Needed Enhancements
+
+1. Sometimes stuck on "One moment..." screen — possibly triggered by invalid card data or a momentary network loss
+2. Ignoring the follow-up survey question will block the kiosk until someone selects an answer; it should time out and complete the check-in with `'na'`
+3. Better error handling, health monitoring, and recovery — most errors and blocking states are silent or only logged in the background; consider a watchdog timer for automatic restart
+4. Network status and API reachability are not surfaced to the user; should show an indicator if offline and retry connections periodically
+5. A failure response from the MIT Card API should be shown to the user, including the card token that was read and the API error code
+6. Performance is slow — likely improvable with more compact API calls, fewer open-ended Airtable searches, and local caching of maker records
+7. Only MIT IDs are supported currently; should fall back to a registered MiFare tap ID in Airtable when MIT ID lookup fails
+8. Input buffer may not be cleared before reading the next card tap
+9. Better idle screen and button graphics
+10. Consider switching to landscape orientation; portrait mode requires display rotation configuration with no functional advantage
+11. Fullscreen mode currently requires X11 — update to support fullscreen under Wayland to simplify OS configuration
+12. Investigate whether there is a touch input event library available for Tkinter
+13. Consider switching to [guizero](https://lawsie.github.io/guizero/) (a simplified wrapper over Tkinter) for easier maintenance
